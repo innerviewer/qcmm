@@ -20,8 +20,9 @@ pub enum CurrentScreen {
 }
 
 pub enum CurrentlyAnswering {
-    TextField,
+    SingleChoice,
     MultipleChoice,
+    FillInTheBlanks,
 }
 
 pub struct App {
@@ -31,7 +32,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> App {
+    pub fn default() -> App {
         App {
             current_screen: CurrentScreen::Main,
             currently_answering: None,
