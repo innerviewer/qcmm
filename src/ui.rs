@@ -1,37 +1,36 @@
-use crate::app::{App, CurrentScreen, CurrentlyAnswering};
 use ratatui::{
     Frame,
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
+    style::Stylize,
     style::{Color, Style},
+    symbols::border,
     text::{Line, Span, Text},
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Widget, Wrap},
 };
 
-pub struct UI<'a> {
-    app: &'a App,
+pub fn render_main_screen(area: Rect, buf: &mut Buffer) {
+    let title = Line::from(" QCM Manager ".bold());
+    let instructions = Line::from(vec![
+        " Create Test ".into(),
+        "<C>".blue().bold(),
+        " Quit ".into(),
+        "<Q> ".blue().bold(),
+    ]);
+    let block = Block::bordered()
+        .title_bottom(instructions.centered())
+        .title_top(title)
+        .border_set(border::ROUNDED);
+
+    let counter_text = Text::from(vec![Line::from(vec!["Main Menu".into()])]);
+
+    Paragraph::new(counter_text)
+        .centered()
+        .block(block)
+        .render(area, buf);
 }
 
-impl<'a> UI<'a> {
-    pub fn new(app: &'a App) -> UI<'a> {
-        UI { app }
-    }
-
-    fn render_main_screen(&self, area: Rect, buf: &mut Buffer) {}
-    fn render_choosing_screen(&self, area: Rect, buf: &mut Buffer) {}
-    fn render_creating_screen(&self, area: Rect, buf: &mut Buffer) {}
-    fn render_answering_screen(&self, area: Rect, buf: &mut Buffer) {}
-    fn render_exiting_screen(&self, area: Rect, buf: &mut Buffer) {}
-}
-
-impl<'a> Widget for UI<'a> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        match self.app.current_screen {
-            CurrentScreen::Main => self.render_main_screen(area, buf),
-            CurrentScreen::Choosing => self.render_choosing_screen(area, buf),
-            CurrentScreen::Creating => self.render_creating_screen(area, buf),
-            CurrentScreen::Answering => self.render_answering_screen(area, buf),
-            CurrentScreen::Exiting => self.render_exiting_screen(area, buf),
-        }
-    }
-}
+pub fn render_choosing_screen(area: Rect, buf: &mut Buffer) {}
+pub fn render_creating_screen(area: Rect, buf: &mut Buffer) {}
+pub fn render_answering_screen(area: Rect, buf: &mut Buffer) {}
+pub fn render_exiting_screen(area: Rect, buf: &mut Buffer) {}

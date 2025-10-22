@@ -1,8 +1,33 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct QCMFile {
+    pub version: u32,
+    pub metadata: Option<Metadata>,
+    pub qcm: QCM,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Metadata {
+    pub created_at: Option<String>,
+    pub author: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct QCM {
+    pub resource: String,
+    pub title: String,
+    pub questions: Vec<Question>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
 pub enum Question {
+    #[serde(rename = "single")]
     SingleChoice(SingleChoiceQuestion),
+    #[serde(rename = "multiple")]
     MultipleChoice(MultipleChoiceQuestion),
+    #[serde(rename = "blanks")]
     FillInTheBlanks(FillInTheBlanksQuestion),
 }
 
