@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_variables, unused_imports, unused_imports_braces)]
+#![allow(dead_code, unused_variables, unused_imports, unused_import_braces)]
 
 use color_eyre::Result;
 use std::env;

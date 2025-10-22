@@ -1,7 +1,7 @@
 use ratatui::{
     Frame,
     buffer::Buffer,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Stylize,
     style::{Color, Style},
     symbols::border,
@@ -9,7 +9,9 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Widget, Wrap},
 };
 
-pub fn render_main_screen(area: Rect, buf: &mut Buffer) {
+use crate::app::App;
+
+pub fn render_base(area: Rect, buf: &mut Buffer, app: &App) {
     let title = Line::from(" QCM Manager ".bold());
     let instructions = Line::from(vec![
         " Create Test ".into(),
@@ -17,17 +19,22 @@ pub fn render_main_screen(area: Rect, buf: &mut Buffer) {
         " Quit ".into(),
         "<Q> ".blue().bold(),
     ]);
-    let block = Block::bordered()
+
+    let screen_title = format!(" {} Screen ", app.current_screen.to_string());
+
+    let block = Block::default()
+        .borders(Borders::ALL)
         .title_bottom(instructions.centered())
         .title_top(title)
-        .border_set(border::ROUNDED);
+        .title(Line::from(screen_title).centered().yellow())
+        .border_style(Style::default().fg(Color::White))
+        .border_type(ratatui::widgets::BorderType::Rounded);
 
-    let counter_text = Text::from(vec![Line::from(vec!["Main Menu".into()])]);
+    block.render(area, buf);
+}
 
-    Paragraph::new(counter_text)
-        .centered()
-        .block(block)
-        .render(area, buf);
+pub fn render_main_screen(area: Rect, buf: &mut Buffer, app: &App) {
+    render_base(area, buf, app);
 }
 
 pub fn render_choosing_screen(area: Rect, buf: &mut Buffer) {}
