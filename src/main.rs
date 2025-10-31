@@ -11,6 +11,10 @@ mod ui;
 
 use crate::app::App;
 
+// TODO: Implement WidgetRef
+// TODO: `cargo add directories` -> crate for handling data directories
+// optimizations in Cargo.toml?
+// tachyonfx?
 fn main() -> Result<()> {
     color_eyre::install()?;
 

@@ -14,13 +14,15 @@ use crate::app::App;
 pub fn render_base(area: Rect, buf: &mut Buffer, app: &App) {
     let title = Line::from(" QCM Manager ".bold());
     let instructions = Line::from(vec![
-        " Create Test ".into(),
+        " Create QCM ".into(),
         "<C>".blue().bold(),
+        " Test QCM ".into(),
+        "<T>".blue().bold(),
         " Quit ".into(),
         "<Q> ".blue().bold(),
     ]);
 
-    let screen_title = format!(" {} Screen ", app.current_screen.to_string());
+    let screen_title = format!(" {} Screen ", app.current_screen);
 
     let block = Block::default()
         .borders(Borders::ALL)
@@ -37,7 +39,9 @@ pub fn render_main_screen(area: Rect, buf: &mut Buffer, app: &App) {
     render_base(area, buf, app);
 }
 
-pub fn render_choosing_screen(area: Rect, buf: &mut Buffer) {}
-pub fn render_creating_screen(area: Rect, buf: &mut Buffer) {}
-pub fn render_answering_screen(area: Rect, buf: &mut Buffer) {}
-pub fn render_exiting_screen(area: Rect, buf: &mut Buffer) {}
+pub fn render_choosing_screen(area: Rect, buf: &mut Buffer, app: &App) {}
+pub fn render_creating_screen(area: Rect, buf: &mut Buffer, app: &App) {}
+pub fn render_answering_screen(area: Rect, buf: &mut Buffer, app: &App) {
+    render_base(area, buf, app);
+}
+pub fn render_exiting_screen(area: Rect, buf: &mut Buffer, app: &App) {}

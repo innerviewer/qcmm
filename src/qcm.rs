@@ -24,31 +24,32 @@ pub struct QCM {
 #[serde(tag = "type")]
 pub enum Question {
     #[serde(rename = "single")]
-    SingleChoice(SingleChoiceQuestion),
+    SingleChoice(ChoiceQuestion),
     #[serde(rename = "multiple")]
-    MultipleChoice(MultipleChoiceQuestion),
+    MultipleChoice(ChoiceQuestion),
     #[serde(rename = "blanks")]
     FillInTheBlanks(FillInTheBlanksQuestion),
 }
 
-pub trait Validatable {
-    type UserAnswer;
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum Answer {
+    Single(usize),
+    Multiple(Vec<usize>),
+    Fill(Vec<String>),
+}
 
-    fn validate(&self, answer: &Self::UserAnswer) -> bool;
+pub trait Answerable {
+    fn answer(&mut self, answer: Answer);
+    fn is_correct(&self) -> bool;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SingleChoiceQuestion {
+pub struct ChoiceQuestion {
     pub prompt: String,
-    pub options: Vec<String>,
-    pub correct_index: usize,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct MultipleChoiceQuestion {
-    pub prompt: String,
-    pub options: Vec<String>,
-    pub correct_indices: Vec<usize>,
+    pub options: Answer,
+    pub correct_answer: Answer,
+    pub user_answer: Option<Answer>,
+    pub points: f32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -59,48 +60,46 @@ pub struct FillInTheBlanksQuestion {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Segment {
     Text(String),
-    Blank { acceptable_answers: Vec<String> },
+    Blank {
+        correct_answers: Answer,
+        user_answer: Option<Answer>,
+        points: f32,
+    },
 }
 
-impl Validatable for SingleChoiceQuestion {
-    type UserAnswer = usize;
-
-    fn validate(&self, answer: &usize) -> bool {
-        *answer == self.correct_index
-    }
-}
-
-impl Validatable for MultipleChoiceQuestion {
-    type UserAnswer = Vec<usize>;
-
-    fn validate(&self, answer: &Vec<usize>) -> bool {
-        let mut sorted_user = answer.clone();
-        let mut sorted_correct = self.correct_indices.clone();
-        sorted_user.sort();
-        sorted_correct.sort();
-        sorted_user == sorted_correct
-    }
-}
-
-impl Validatable for FillInTheBlanksQuestion {
-    type UserAnswer = Vec<String>;
-
-    fn validate(&self, answers: &Vec<String>) -> bool {
-        let mut idx = 0;
-        for segment in &self.segments {
-            if let Segment::Blank { acceptable_answers } = segment {
-                if let Some(user_input) = answers.get(idx) {
-                    if !acceptable_answers.iter().any(|ans| ans == user_input)
-                    //.any(|ans| ans.eq_ignore_ascii_case(user_input))
-                    {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-                idx += 1;
-            }
+impl Answerable for ChoiceQuestion {
+    fn is_correct(&self) -> bool {
+        match (&self.correct_answer, &self.user_answer) {
+            (a, Some(u)) => a == u,
+            _ => false,
         }
-        true
+    }
+
+    fn answer(&mut self, ans: Answer) {
+        if let Answer::Single(i) = ans {
+            self.user_answer = Some(i);
+        } else {
+            // TODO: don't panic
+            panic!("Invalid answer type for SingleChoiceQuestion");
+        }
+    }
+}
+
+impl Answerable for FillInTheBlanksQuestion {
+    fn is_correct(&self) -> bool {
+        for segmen in
+        match (&self.correct_answer, &self.user_answer) {
+            (a, Some(u)) => a == u,
+            _ => false,
+        }
+    }
+
+    fn answer(&mut self, ans: Answer) {
+        if let Answer::Single(i) = ans {
+            self.user_answer = Some(i);
+        } else {
+            // TODO: don't panic
+            panic!("Invalid answer type for SingleChoiceQuestion");
+        }
     }
 }

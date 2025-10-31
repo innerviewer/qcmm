@@ -75,10 +75,10 @@ impl Widget for &App {
         match self.current_screen {
             // TODO: pass self to each?
             CurrentScreen::Main => ui::render_main_screen(area, buf, self),
-            CurrentScreen::Choosing => ui::render_choosing_screen(area, buf),
-            CurrentScreen::Creating => ui::render_creating_screen(area, buf),
-            CurrentScreen::Answering => ui::render_answering_screen(area, buf),
-            CurrentScreen::Exiting => ui::render_exiting_screen(area, buf),
+            CurrentScreen::Choosing => ui::render_choosing_screen(area, buf, self),
+            CurrentScreen::Creating => ui::render_creating_screen(area, buf, self),
+            CurrentScreen::Answering => ui::render_answering_screen(area, buf, self),
+            CurrentScreen::Exiting => ui::render_exiting_screen(area, buf, self),
         }
     }
 }
