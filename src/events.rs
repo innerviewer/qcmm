@@ -16,8 +16,7 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
 pub fn handle_key_event(app: &mut App, key_event: KeyEvent) {
     match key_event.code {
         KeyCode::Char('q') => app.exit(),
-        KeyCode::Left => app.decrement_counter(),
-        KeyCode::Right => app.increment_counter(),
+        KeyCode::Char('t') => app.test_qcm(),
         _ => {}
     }
 }
