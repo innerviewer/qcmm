@@ -19,38 +19,36 @@ impl Renderable for ChoiceQuestion {
             Span::raw(&self.prompt),
         ])];
 
+        let is_correct = self.is_correct();
+        // let question_color = if is_correct { Color::Green } else { Color::Red };
+        let question_color = Color::White;
+
         for (i, option) in self.options.iter().enumerate() {
-            let mut style = Style::default();
+            let mut answer_color = Style::default();
 
-            if let Some(answer) = &self.user_answer {
-                match answer {
-                    Answer::Single(u) if *u == i => {
-                        style = style.fg(Color::Cyan);
-                    }
-                    Answer::Multiple(v) if v.contains(&i) => {
-                        style = style.fg(Color::Cyan);
-                    }
-                    _ => {}
-                }
+            if self.is_correct_index(i) {
+                answer_color = answer_color.bg(Color::Green);
+            } else if self.incorrect_answers().contains(&i) {
+                answer_color = answer_color.bg(Color::Red);
             }
 
-            if self.is_correct() {
-                if let Answer::Single(correct) = &self.correct_answer {
-                    if *correct == i {
-                        style = style.fg(Color::Green);
-                    }
-                } else if let Answer::Multiple(corrects) = &self.correct_answer
-                    && corrects.contains(&i)
-                {
-                }
-            }
+            // if self.is_correct() {
+            //     if let Answer::Single(correct) = &self.correct_answer {
+            //         if *correct == i {
+            //             style = style.fg(Color::Green);
+            //         }
+            //     } else if let Answer::Multiple(corrects) = &self.correct_answer
+            //         && corrects.contains(&i)
+            //     {
+            //     }
+            // }
 
             lines.push(Line::from(vec![
                 Span::styled(
                     format!("  {}. ", i + 1),
-                    Style::default().fg(Color::DarkGray),
+                    Style::default(), // Style::default().fg(Color::DarkGray),
                 ),
-                Span::styled(option.clone(), style),
+                Span::styled(option.clone(), answer_color),
             ]));
         }
 
@@ -58,7 +56,8 @@ impl Renderable for ChoiceQuestion {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Choice Question"),
+                    .title("Choice Question")
+                    .style(question_color),
             )
             .wrap(Wrap { trim: true });
 
@@ -75,7 +74,7 @@ impl Renderable for FillInTheBlanksQuestion {
                 Segment::Text(t) => text.push_str(t),
                 Segment::Blank { user_answer, .. } => {
                     let answer_display = match user_answer {
-                        Some(a) if !a.is_empty() => format!("[{}]", a),
+                        a if !a.is_empty() => format!("[{}]", a),
                         _ => "[_____]".to_string(),
                     };
                     text.push_str(&answer_display);

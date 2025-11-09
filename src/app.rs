@@ -1,4 +1,7 @@
-use crate::qcm::{Answer, ChoiceQuestion, FillInTheBlanksQuestion, QCM, Question, Segment};
+use crate::qcm::{
+    Answer, ChoiceQuestion, FillInTheBlanksQuestion, Metadata, QCMFile, Qcm, Question, Segment,
+};
+use crate::serialization;
 use crate::{events, ui};
 use ratatui::{
     DefaultTerminal, Frame,
@@ -41,7 +44,7 @@ pub struct AnsweringState {
     pub mode: AnsweringMode,
     pub current_question: usize,
     pub scroll_offset: u16,
-    pub qcm: QCM,
+    pub qcm: Qcm,
 }
 
 pub struct App {
@@ -84,7 +87,7 @@ impl App {
                 "Washington".to_string(),
             ],
             correct_answer: Answer::Single(0),
-            user_answer: None,
+            user_answer: Answer::Single(1),
             points: 1.0,
         });
 
@@ -98,7 +101,7 @@ impl App {
                 "6".to_string(),
             ],
             correct_answer: Answer::Multiple(vec![0, 2, 4]),
-            user_answer: None,
+            user_answer: Answer::Multiple(vec![0, 1, 4]),
             points: 1.0,
         });
 
@@ -107,25 +110,41 @@ impl App {
                 Segment::Text("The capital of Germany is ".to_string()),
                 Segment::Blank {
                     correct_answers: vec!["Berlin".to_string(), "berlin".to_string()],
-                    user_answer: None,
+                    user_answer: "berlin".to_string(),
                     points: 1.0,
                 },
                 Segment::Text(". ".to_string()),
                 Segment::Text("The capital of Italy is ".to_string()),
                 Segment::Blank {
                     correct_answers: vec!["Rome".to_string(), "rome".to_string()],
-                    user_answer: None,
+                    user_answer: "idk".to_string(),
                     points: 1.0,
                 },
                 Segment::Text(".".to_string()),
             ],
         });
 
-        let test_qcm = QCM {
+        let test_qcm = Qcm {
             title: "Partiel 2025-10-22".to_string(),
             resource: "R1.03".to_string(),
             questions: vec![test_single_choice, test_multiple_choice, test_fill_blanks],
         };
+
+        let metadata = Metadata {
+            created_at: "2025-10-22".to_string().into(),
+            author: "innerviewer".to_string().into(),
+        };
+
+        let qcm_file = QCMFile {
+            version: 1,
+            metadata: Some(metadata),
+            qcm: test_qcm.clone(),
+        };
+
+        serialization::serialize_qcm(
+            std::env::current_dir().unwrap().join("test.toml").as_path(),
+            &qcm_file,
+        );
 
         self.current_screen = CurrentScreen::Answering(AnsweringState {
             current_question: 0,

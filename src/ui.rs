@@ -47,7 +47,7 @@ pub fn render_answering_screen(area: Rect, buf: &mut Buffer, app: &App) {
 
     base.render(area, buf);
 
-    Paragraph::new("Type your QCM questions...")
+    Paragraph::new("...")
         .alignment(Alignment::Center)
         .render(inner, buf);
 
@@ -58,7 +58,7 @@ pub fn render_answering_screen(area: Rect, buf: &mut Buffer, app: &App) {
                 x: inner.x,
                 y,
                 width: inner.width,
-                height: 6, // adjust per question type
+                height: 20,
             };
             question.render(question_area, buf);
             y += 7; // spacing

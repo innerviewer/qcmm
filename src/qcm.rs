@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct QCMFile {
     pub version: u32,
     pub metadata: Option<Metadata>,
-    pub qcm: QCM,
+    pub qcm: Qcm,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,7 +21,7 @@ pub struct Metadata {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct QCM {
+pub struct Qcm {
     pub resource: String,
     pub title: String,
     pub questions: Vec<Question>,
@@ -48,6 +48,8 @@ pub enum Answer {
 pub trait Answerable {
     fn answer(&mut self, answer: Answer);
     fn is_correct(&self) -> bool;
+    fn is_correct_index(&self, index: usize) -> bool;
+    fn incorrect_answers(&self) -> Vec<usize>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,7 +57,7 @@ pub struct ChoiceQuestion {
     pub prompt: String,
     pub options: Vec<String>,
     pub correct_answer: Answer,
-    pub user_answer: Option<Answer>,
+    pub user_answer: Answer,
     pub points: f32,
 }
 
@@ -69,7 +71,7 @@ pub enum Segment {
     Text(String),
     Blank {
         correct_answers: Vec<String>,
-        user_answer: Option<String>,
+        user_answer: String,
         points: f32,
     },
 }
@@ -78,7 +80,7 @@ pub enum Segment {
 // Implementations
 //
 
-impl QCM {
+impl Qcm {
     /// Compute the total possible points in this QCM.
     pub fn total_points(&self) -> f32 {
         self.questions.iter().map(|q| q.total_points()).sum()
@@ -117,7 +119,7 @@ impl Question {
                 }
             }
             Question::FillInTheBlanks(q) => {
-                let incorrect = q.incorrect_blanks();
+                let incorrect = q.incorrect_answers();
                 q.segments
                     .iter()
                     .enumerate()
@@ -133,22 +135,45 @@ impl Question {
 
 impl Answerable for ChoiceQuestion {
     fn answer(&mut self, ans: Answer) {
-        self.user_answer = Some(ans);
+        self.user_answer = ans;
     }
 
     fn is_correct(&self) -> bool {
+        self.incorrect_answers().is_empty()
+    }
+
+    fn is_correct_index(&self, option_index: usize) -> bool {
         match (&self.correct_answer, &self.user_answer) {
-            (Answer::Single(a), Some(Answer::Single(u))) => a == u,
-            (Answer::Multiple(a), Some(Answer::Multiple(u))) => {
-                // TODO: is this the way?
-                let mut a_sorted = a.clone();
-                let mut u_sorted = u.clone();
-                a_sorted.sort_unstable();
-                u_sorted.sort_unstable();
-                a_sorted == u_sorted
+            (Answer::Single(a), Answer::Single(u)) => a == u && *u == option_index,
+            (Answer::Multiple(a), Answer::Multiple(u)) => {
+                a.contains(&option_index) && u.contains(&option_index)
             }
             _ => false,
         }
+    }
+
+    fn incorrect_answers(&self) -> Vec<usize> {
+        let mut incorrect: Vec<usize> = vec![];
+        match (&self.correct_answer, &self.user_answer) {
+            (Answer::Single(a), Answer::Single(u)) => {
+                if a != u {
+                    incorrect.push(*u);
+                }
+            }
+            (Answer::Multiple(a), Answer::Multiple(u)) => {
+                // TODO: should I leave this?
+                assert_eq!(a.len(), u.len());
+
+                for (i, _) in a.iter().enumerate() {
+                    if a[i] != u[i] {
+                        incorrect.push(i);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        incorrect
     }
 }
 
@@ -158,7 +183,7 @@ impl Answerable for FillInTheBlanksQuestion {
             let mut fill_iter = user_fills.into_iter();
             for segment in &mut self.segments {
                 if let Segment::Blank { user_answer, .. } = segment {
-                    *user_answer = fill_iter.next();
+                    *user_answer = fill_iter.next().unwrap();
                 }
             }
         } else {
@@ -167,13 +192,25 @@ impl Answerable for FillInTheBlanksQuestion {
     }
 
     fn is_correct(&self) -> bool {
-        self.incorrect_blanks().is_empty()
+        self.incorrect_answers().is_empty()
     }
-}
 
-impl FillInTheBlanksQuestion {
-    /// Returns the indices of blanks that are incorrect or unanswered.
-    pub fn incorrect_blanks(&self) -> Vec<usize> {
+    fn is_correct_index(&self, blank_index: usize) -> bool {
+        if let Segment::Blank {
+            correct_answers,
+            user_answer,
+            ..
+        } = &self.segments[blank_index]
+        {
+            correct_answers
+                .iter()
+                .any(|ca| ca.eq_ignore_ascii_case(user_answer))
+        } else {
+            false
+        }
+    }
+
+    fn incorrect_answers(&self) -> Vec<usize> {
         let mut incorrect = Vec::new();
         for (i, segment) in self.segments.iter().enumerate() {
             if let Segment::Blank {
@@ -183,7 +220,7 @@ impl FillInTheBlanksQuestion {
             } = segment
             {
                 match user_answer {
-                    Some(ua) if correct_answers.iter().any(|ca| ca.eq_ignore_ascii_case(ua)) => {
+                    ua if correct_answers.iter().any(|ca| ca.eq_ignore_ascii_case(ua)) => {
                         // correct
                     }
                     _ => incorrect.push(i),
